@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Block HN Users</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Blocked HN Users</h1>
+
+    <div class="add-user-section">
+      <input type="text" id="username-input" placeholder="Enter username to block" />
+      <button id="add-user-btn">Block User</button>
+    </div>
+
+    <div class="blocked-users-section">
+      <h2>Blocked Users (<span id="blocked-count">0</span>)</h2>
+      <div id="blocked-list"></div>
+      <div id="empty-message" class="empty-message">No blocked users yet</div>
+    </div>
+
+    <div class="footer">
+      <div class="import-export-section">
+        <button id="export-btn">Export List</button>
+        <button id="import-btn">Import List</button>
+        <input type="file" id="import-file" accept=".txt" style="display: none;">
+      </div>
+      <button id="clear-all-btn" class="danger-btn">Clear All</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

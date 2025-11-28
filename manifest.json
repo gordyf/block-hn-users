@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Block HN Users",
+  "version": "1.0.0",
+  "description": "Block users on Hacker News to hide their posts and comments",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://news.ycombinator.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://news.ycombinator.com/*"],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_end"
+    }
+  ]
+}

@@ -1,0 +1,149 @@
+body {
+  width: 400px;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: 14px;
+  color: #333;
+}
+
+.container {
+  padding: 16px;
+}
+
+h1 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #ff6600;
+}
+
+h2 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+}
+
+.add-user-section {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+#username-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+#username-input:focus {
+  outline: none;
+  border-color: #ff6600;
+}
+
+button {
+  padding: 8px 16px;
+  background-color: #ff6600;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+button:hover {
+  background-color: #ff7700;
+}
+
+button:active {
+  background-color: #e65c00;
+}
+
+.blocked-users-section {
+  margin-bottom: 16px;
+}
+
+#blocked-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.blocked-user-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  margin-bottom: 4px;
+  background-color: #f6f6ef;
+  border-radius: 4px;
+}
+
+.blocked-user-item:last-child {
+  margin-bottom: 0;
+}
+
+.username {
+  font-weight: 500;
+  color: #333;
+}
+
+.unblock-btn {
+  padding: 4px 12px;
+  background-color: #666;
+  font-size: 12px;
+}
+
+.unblock-btn:hover {
+  background-color: #777;
+}
+
+.empty-message {
+  text-align: center;
+  color: #999;
+  padding: 24px;
+  font-style: italic;
+}
+
+.footer {
+  padding-top: 12px;
+  border-top: 1px solid #ddd;
+}
+
+.import-export-section {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.import-export-section button {
+  flex: 1;
+  background-color: #666;
+}
+
+.import-export-section button:hover {
+  background-color: #777;
+}
+
+.import-export-section button:active {
+  background-color: #555;
+}
+
+.danger-btn {
+  width: 100%;
+  background-color: #dc3545;
+}
+
+.danger-btn:hover {
+  background-color: #c82333;
+}
+
+.danger-btn:active {
+  background-color: #bd2130;
+}

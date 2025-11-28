@@ -1,0 +1,25 @@
+.block-user-btn {
+  cursor: pointer;
+  color: #828282;
+  font-size: 10px;
+  user-select: none;
+}
+
+.block-user-btn:hover {
+  color: #ff6600;
+  text-decoration: underline;
+}
+
+.blocked-comment {
+  opacity: 0.5;
+}
+
+.blocked-text {
+  color: #828282;
+  font-style: italic;
+}
+
+.blocked-username {
+  color: #828282;
+  font-style: italic;
+}
