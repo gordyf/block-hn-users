@@ -14,6 +14,25 @@
       <button id="add-user-btn">Block User</button>
     </div>
 
+    <div class="settings-section">
+      <h2>API Configuration</h2>
+      <div class="api-config">
+        <input type="password" id="api-key-input" placeholder="API Key (optional for sync)" autocomplete="off">
+        <div class="api-buttons">
+          <button id="save-api-key-btn">Save Key</button>
+          <button id="clear-api-key-btn" class="secondary-btn">Clear Key</button>
+        </div>
+      </div>
+      <div class="sync-controls">
+        <button id="sync-now-btn" class="secondary-btn">
+          <span id="sync-icon">↻</span> Sync Now
+        </button>
+        <div id="sync-status" class="sync-status">
+          <span id="sync-status-text">Offline mode - No API key configured</span>
+        </div>
+      </div>
+    </div>
+
     <div class="blocked-users-section">
       <h2>Blocked Users (<span id="blocked-count">0</span>)</h2>
       <div id="blocked-list"></div>
@@ -21,15 +40,12 @@
     </div>
 
     <div class="footer">
-      <div class="import-export-section">
-        <button id="export-btn">Export List</button>
-        <button id="import-btn">Import List</button>
-        <input type="file" id="import-file" accept=".txt" style="display: none;">
-      </div>
       <button id="clear-all-btn" class="danger-btn">Clear All</button>
     </div>
   </div>
 
+  <script src="storage.js"></script>
+  <script src="api.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

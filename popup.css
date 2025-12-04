@@ -28,7 +28,82 @@ h2 {
 .add-user-section {
   display: flex;
   gap: 8px;
+  margin-bottom: 16px;
+}
+
+.settings-section {
   margin-bottom: 20px;
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.api-config {
+  margin-bottom: 12px;
+}
+
+#api-key-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  margin-bottom: 8px;
+  box-sizing: border-box;
+}
+
+#api-key-input:focus {
+  outline: none;
+  border-color: #ff6600;
+}
+
+.api-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.api-buttons button {
+  flex: 1;
+}
+
+.sync-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.sync-status {
+  flex: 1;
+  font-size: 12px;
+}
+
+.sync-status-text {
+  display: block;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.sync-status-text.offline {
+  color: #666;
+  background-color: #e9ecef;
+}
+
+.sync-status-text.success {
+  color: #28a745;
+  background-color: #d4edda;
+}
+
+.sync-status-text.error {
+  color: #dc3545;
+  background-color: #f8d7da;
+}
+
+.sync-status-text.warning {
+  color: #856404;
+  background-color: #fff3cd;
 }
 
 #username-input {
@@ -63,6 +138,28 @@ button:active {
   background-color: #e65c00;
 }
 
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.secondary-btn {
+  background-color: #666;
+}
+
+.secondary-btn:hover {
+  background-color: #777;
+}
+
+.secondary-btn:active {
+  background-color: #555;
+}
+
+.secondary-btn:disabled {
+  background-color: #999;
+}
+
 .blocked-users-section {
   margin-bottom: 16px;
 }
@@ -79,10 +176,25 @@ button:active {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   padding: 8px;
   margin-bottom: 4px;
   background-color: #f6f6ef;
   border-radius: 4px;
+}
+
+.sync-indicator {
+  font-size: 14px;
+  cursor: help;
+  margin-left: auto;
+}
+
+.sync-indicator.pending {
+  color: #ffc107;
+}
+
+.sync-indicator.failed {
+  color: #dc3545;
 }
 
 .blocked-user-item:last-child {
@@ -116,25 +228,6 @@ button:active {
   border-top: 1px solid #ddd;
 }
 
-.import-export-section {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.import-export-section button {
-  flex: 1;
-  background-color: #666;
-}
-
-.import-export-section button:hover {
-  background-color: #777;
-}
-
-.import-export-section button:active {
-  background-color: #555;
-}
-
 .danger-btn {
   width: 100%;
   background-color: #dc3545;
@@ -146,4 +239,19 @@ button:active {
 
 .danger-btn:active {
   background-color: #bd2130;
+}
+
+/* Spinning animation for sync icon */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinning {
+  display: inline-block;
+  animation: spin 1s linear infinite;
 }
