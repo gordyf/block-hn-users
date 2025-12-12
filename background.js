@@ -38,7 +38,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }
 });
 
-// Daily sync: Fetch full list from API and replace local cache
+// Daily sync: Fetch full list from API and merge with local cache (union)
 async function performDailySync() {
   console.log('[HN Block] Starting daily sync...');
 
@@ -53,23 +53,78 @@ async function performDailySync() {
     const apiUsers = await api.getBlockedUsers();
 
     // Extract usernames from API response
-    const usernames = apiUsers.map(user => user.username);
+    const apiUsernames = apiUsers.map(user => user.username);
 
-    // Replace local cache with API data
-    await setBlockedUsers(usernames);
+    // Get current local users
+    const localUsers = await getBlockedUsers();
+
+    // Take the union of local and remote users (don't remove locally blocked users!)
+    const apiSet = new Set(apiUsernames);
+    const localSet = new Set(localUsers);
+
+    // Users in local but not in API - upload them
+    const toUpload = localUsers.filter(u => !apiSet.has(u));
+
+    // Users in API but not in local - download them
+    const toDownload = apiUsernames.filter(u => !localSet.has(u));
+
+    // Create merged list (union)
+    const merged = [...localUsers, ...toDownload];
+
+    // Upload local-only users to API using bulk endpoint
+    let uploadedCount = 0;
+    let uploadFailed = 0;
+
+    if (toUpload.length > 0) {
+      try {
+        const bulkResult = await api.bulkBlockUsers(toUpload);
+        uploadedCount = bulkResult.successful || 0;
+
+        // Queue failed users for retry
+        if (bulkResult.results) {
+          for (const result of bulkResult.results) {
+            if (!result.success && result.message !== 'User is already blocked') {
+              uploadFailed++;
+              await addPendingOperation({
+                type: 'block',
+                username: result.username,
+                timestamp: Date.now(),
+                retryCount: 0
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error('[HN Block] Failed to bulk upload users:', error);
+        uploadFailed = toUpload.length;
+
+        // Queue all users for individual retry
+        for (const username of toUpload) {
+          await addPendingOperation({
+            type: 'block',
+            username,
+            timestamp: Date.now(),
+            retryCount: 0
+          });
+        }
+      }
+    }
+
+    // Update local cache with merged list
+    await setBlockedUsers(merged);
 
     // Update sync state
     await updateSyncState({
       lastSyncTime: Date.now(),
-      lastSyncSuccess: true,
-      lastSyncError: null
+      lastSyncSuccess: uploadFailed === 0,
+      lastSyncError: uploadFailed > 0 ? `Failed to upload ${uploadFailed} users` : null
     });
 
     // Clear pending operations that are now synced
-    await clearSyncedOperations(usernames);
+    await clearSyncedOperations(merged);
 
-    console.log(`[HN Block] Daily sync complete: ${usernames.length} users`);
-    return { success: true, userCount: usernames.length };
+    console.log(`[HN Block] Daily sync complete: ${merged.length} users (uploaded ${uploadedCount}, downloaded ${toDownload.length}, failed ${uploadFailed})`);
+    return { success: true, userCount: merged.length, uploaded: uploadedCount, downloaded: toDownload.length, uploadFailed };
   } catch (error) {
     console.error('[HN Block] Daily sync failed:', error);
 
@@ -244,25 +299,43 @@ async function handleInitialSync() {
     const apiUsers = await api.getBlockedUsers();
     const apiUsernames = new Set(apiUsers.map(u => u.username));
 
-    // Upload local users not in API
+    // Upload local users not in API using bulk endpoint
     const toUpload = localUsers.filter(u => !apiUsernames.has(u));
     let uploaded = 0;
     let uploadFailed = 0;
 
-    for (const username of toUpload) {
+    if (toUpload.length > 0) {
       try {
-        await api.blockUser(username);
-        uploaded++;
+        const bulkResult = await api.bulkBlockUsers(toUpload);
+        uploaded = bulkResult.successful || 0;
+
+        // Queue failed users for retry
+        if (bulkResult.results) {
+          for (const result of bulkResult.results) {
+            if (!result.success && result.message !== 'User is already blocked') {
+              uploadFailed++;
+              await addPendingOperation({
+                type: 'block',
+                username: result.username,
+                timestamp: Date.now(),
+                retryCount: 0
+              });
+            }
+          }
+        }
       } catch (error) {
-        console.error(`[HN Block] Failed to upload ${username}:`, error);
-        uploadFailed++;
-        // Queue for retry
-        await addPendingOperation({
-          type: 'block',
-          username,
-          timestamp: Date.now(),
-          retryCount: 0
-        });
+        console.error('[HN Block] Failed to bulk upload users:', error);
+        uploadFailed = toUpload.length;
+
+        // Queue all users for individual retry
+        for (const username of toUpload) {
+          await addPendingOperation({
+            type: 'block',
+            username,
+            timestamp: Date.now(),
+            retryCount: 0
+          });
+        }
       }
     }
 
