@@ -94,6 +94,14 @@ class HNBlockAPI {
     }
   }
 
+  async bulkBlockUsers(usernames) {
+    const response = await this.request('/blocked-users/bulk', {
+      method: 'POST',
+      body: JSON.stringify({ usernames })
+    });
+    return response;
+  }
+
   async checkConnection() {
     try {
       await this.getBlockedUsers();

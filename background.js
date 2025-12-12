@@ -71,21 +71,42 @@ async function performDailySync() {
     // Create merged list (union)
     const merged = [...localUsers, ...toDownload];
 
-    // Upload local-only users to API
+    // Upload local-only users to API using bulk endpoint
+    let uploadedCount = 0;
     let uploadFailed = 0;
-    for (const username of toUpload) {
+
+    if (toUpload.length > 0) {
       try {
-        await api.blockUser(username);
+        const bulkResult = await api.bulkBlockUsers(toUpload);
+        uploadedCount = bulkResult.successful || 0;
+
+        // Queue failed users for retry
+        if (bulkResult.results) {
+          for (const result of bulkResult.results) {
+            if (!result.success && result.message !== 'User is already blocked') {
+              uploadFailed++;
+              await addPendingOperation({
+                type: 'block',
+                username: result.username,
+                timestamp: Date.now(),
+                retryCount: 0
+              });
+            }
+          }
+        }
       } catch (error) {
-        console.error(`[HN Block] Failed to upload ${username}:`, error);
-        uploadFailed++;
-        // Queue for retry
-        await addPendingOperation({
-          type: 'block',
-          username,
-          timestamp: Date.now(),
-          retryCount: 0
-        });
+        console.error('[HN Block] Failed to bulk upload users:', error);
+        uploadFailed = toUpload.length;
+
+        // Queue all users for individual retry
+        for (const username of toUpload) {
+          await addPendingOperation({
+            type: 'block',
+            username,
+            timestamp: Date.now(),
+            retryCount: 0
+          });
+        }
       }
     }
 
@@ -102,8 +123,8 @@ async function performDailySync() {
     // Clear pending operations that are now synced
     await clearSyncedOperations(merged);
 
-    console.log(`[HN Block] Daily sync complete: ${merged.length} users (uploaded ${toUpload.length - uploadFailed}, downloaded ${toDownload.length})`);
-    return { success: true, userCount: merged.length, uploaded: toUpload.length - uploadFailed, downloaded: toDownload.length };
+    console.log(`[HN Block] Daily sync complete: ${merged.length} users (uploaded ${uploadedCount}, downloaded ${toDownload.length}, failed ${uploadFailed})`);
+    return { success: true, userCount: merged.length, uploaded: uploadedCount, downloaded: toDownload.length, uploadFailed };
   } catch (error) {
     console.error('[HN Block] Daily sync failed:', error);
 
@@ -278,25 +299,43 @@ async function handleInitialSync() {
     const apiUsers = await api.getBlockedUsers();
     const apiUsernames = new Set(apiUsers.map(u => u.username));
 
-    // Upload local users not in API
+    // Upload local users not in API using bulk endpoint
     const toUpload = localUsers.filter(u => !apiUsernames.has(u));
     let uploaded = 0;
     let uploadFailed = 0;
 
-    for (const username of toUpload) {
+    if (toUpload.length > 0) {
       try {
-        await api.blockUser(username);
-        uploaded++;
+        const bulkResult = await api.bulkBlockUsers(toUpload);
+        uploaded = bulkResult.successful || 0;
+
+        // Queue failed users for retry
+        if (bulkResult.results) {
+          for (const result of bulkResult.results) {
+            if (!result.success && result.message !== 'User is already blocked') {
+              uploadFailed++;
+              await addPendingOperation({
+                type: 'block',
+                username: result.username,
+                timestamp: Date.now(),
+                retryCount: 0
+              });
+            }
+          }
+        }
       } catch (error) {
-        console.error(`[HN Block] Failed to upload ${username}:`, error);
-        uploadFailed++;
-        // Queue for retry
-        await addPendingOperation({
-          type: 'block',
-          username,
-          timestamp: Date.now(),
-          retryCount: 0
-        });
+        console.error('[HN Block] Failed to bulk upload users:', error);
+        uploadFailed = toUpload.length;
+
+        // Queue all users for individual retry
+        for (const username of toUpload) {
+          await addPendingOperation({
+            type: 'block',
+            username,
+            timestamp: Date.now(),
+            retryCount: 0
+          });
+        }
       }
     }
 

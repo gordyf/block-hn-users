@@ -381,11 +381,14 @@ async function syncNow() {
       const downloadMsg = result.dailySync.downloaded > 0
         ? ` Downloaded ${result.dailySync.downloaded} remote users.`
         : '';
+      const failedMsg = result.dailySync.uploadFailed > 0
+        ? ` ${result.dailySync.uploadFailed} uploads failed (queued for retry).`
+        : '';
       const pendingMsg = result.pendingProcessed > 0
         ? ` Processed ${result.pendingProcessed} pending operations.`
         : '';
 
-      alert(`Sync complete! ${result.dailySync.userCount} total users.${uploadMsg}${downloadMsg}${pendingMsg}`);
+      alert(`Sync complete! ${result.dailySync.userCount} total users.${uploadMsg}${downloadMsg}${failedMsg}${pendingMsg}`);
     } else {
       alert(`Sync failed: ${result.dailySync.error || result.dailySync.reason}`);
       syncState = await getSyncState();
