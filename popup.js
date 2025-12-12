@@ -6,9 +6,18 @@ let syncState = null;
 let apiKey = null;
 
 async function loadData() {
-  blockedUsers = await getBlockedUsers();
-  syncState = await getSyncState();
-  apiKey = await getAPIKey();
+  // Batch all storage reads into a single call for better performance
+  const result = await chrome.storage.sync.get(['blockedUsers', 'syncState', 'apiKey']);
+
+  blockedUsers = result.blockedUsers || [];
+  syncState = result.syncState || {
+    lastSyncTime: null,
+    lastSyncSuccess: null,
+    lastSyncError: null,
+    pendingOperations: []
+  };
+  apiKey = result.apiKey || null;
+
   updateUI();
   updateSyncStatus();
 }
@@ -25,10 +34,19 @@ function updateUI() {
     emptyMessage.style.display = 'block';
   } else {
     emptyMessage.style.display = 'none';
+
+    // Build a Map of pending operations for O(1) lookup instead of O(n) search
+    const pendingMap = new Map();
+    if (apiKey && syncState?.pendingOperations) {
+      for (const op of syncState.pendingOperations) {
+        pendingMap.set(op.username, op);
+      }
+    }
+
     blockedList.innerHTML = blockedUsers
       .sort()
       .map(username => {
-        const syncIndicator = getSyncIndicatorHTML(username);
+        const syncIndicator = getSyncIndicatorHTML(username, pendingMap);
         return `
           <div class="blocked-user-item">
             <span class="username">${escapeHtml(username)}</span>
@@ -45,13 +63,12 @@ function updateUI() {
   }
 }
 
-function getSyncIndicatorHTML(username) {
-  if (!apiKey) {
-    return ''; // No API key, no sync indicator
+function getSyncIndicatorHTML(username, pendingMap) {
+  if (!pendingMap || pendingMap.size === 0) {
+    return ''; // No pending operations
   }
 
-  const pending = syncState?.pendingOperations || [];
-  const operation = pending.find(op => op.username === username);
+  const operation = pendingMap.get(username);
 
   if (operation) {
     const retryCount = operation.retryCount || 0;
