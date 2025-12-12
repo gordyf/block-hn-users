@@ -375,11 +375,17 @@ async function syncNow() {
       updateUI();
       updateSyncStatus();
 
+      const uploadMsg = result.dailySync.uploaded > 0
+        ? ` Uploaded ${result.dailySync.uploaded} local users.`
+        : '';
+      const downloadMsg = result.dailySync.downloaded > 0
+        ? ` Downloaded ${result.dailySync.downloaded} remote users.`
+        : '';
       const pendingMsg = result.pendingProcessed > 0
         ? ` Processed ${result.pendingProcessed} pending operations.`
         : '';
 
-      alert(`Sync complete! ${result.dailySync.userCount} users synced.${pendingMsg}`);
+      alert(`Sync complete! ${result.dailySync.userCount} total users.${uploadMsg}${downloadMsg}${pendingMsg}`);
     } else {
       alert(`Sync failed: ${result.dailySync.error || result.dailySync.reason}`);
       syncState = await getSyncState();

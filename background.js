@@ -38,7 +38,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
   }
 });
 
-// Daily sync: Fetch full list from API and replace local cache
+// Daily sync: Fetch full list from API and merge with local cache (union)
 async function performDailySync() {
   console.log('[HN Block] Starting daily sync...');
 
@@ -53,23 +53,57 @@ async function performDailySync() {
     const apiUsers = await api.getBlockedUsers();
 
     // Extract usernames from API response
-    const usernames = apiUsers.map(user => user.username);
+    const apiUsernames = apiUsers.map(user => user.username);
 
-    // Replace local cache with API data
-    await setBlockedUsers(usernames);
+    // Get current local users
+    const localUsers = await getBlockedUsers();
+
+    // Take the union of local and remote users (don't remove locally blocked users!)
+    const apiSet = new Set(apiUsernames);
+    const localSet = new Set(localUsers);
+
+    // Users in local but not in API - upload them
+    const toUpload = localUsers.filter(u => !apiSet.has(u));
+
+    // Users in API but not in local - download them
+    const toDownload = apiUsernames.filter(u => !localSet.has(u));
+
+    // Create merged list (union)
+    const merged = [...localUsers, ...toDownload];
+
+    // Upload local-only users to API
+    let uploadFailed = 0;
+    for (const username of toUpload) {
+      try {
+        await api.blockUser(username);
+      } catch (error) {
+        console.error(`[HN Block] Failed to upload ${username}:`, error);
+        uploadFailed++;
+        // Queue for retry
+        await addPendingOperation({
+          type: 'block',
+          username,
+          timestamp: Date.now(),
+          retryCount: 0
+        });
+      }
+    }
+
+    // Update local cache with merged list
+    await setBlockedUsers(merged);
 
     // Update sync state
     await updateSyncState({
       lastSyncTime: Date.now(),
-      lastSyncSuccess: true,
-      lastSyncError: null
+      lastSyncSuccess: uploadFailed === 0,
+      lastSyncError: uploadFailed > 0 ? `Failed to upload ${uploadFailed} users` : null
     });
 
     // Clear pending operations that are now synced
-    await clearSyncedOperations(usernames);
+    await clearSyncedOperations(merged);
 
-    console.log(`[HN Block] Daily sync complete: ${usernames.length} users`);
-    return { success: true, userCount: usernames.length };
+    console.log(`[HN Block] Daily sync complete: ${merged.length} users (uploaded ${toUpload.length - uploadFailed}, downloaded ${toDownload.length})`);
+    return { success: true, userCount: merged.length, uploaded: toUpload.length - uploadFailed, downloaded: toDownload.length };
   } catch (error) {
     console.error('[HN Block] Daily sync failed:', error);
 
